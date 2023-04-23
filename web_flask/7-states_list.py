@@ -1,33 +1,34 @@
 #!/usr/bin/python3
-'''A simple Flask web application.
-'''
-from flask import Flask, render_template
-
-from models import storage
+""" this module contains a script that starts a Flask web application
+    the web application must be listening on 0.0.0.0, port 5000
+    Routes: - /states_list """
+from models import *
+from models.base_model import BaseModel, Base
+from models.user import User
+from models.place import Place
 from models.state import State
-
-
+from models.city import City
+from models.amenity import Amenity
+from models.review import Review
+from flask import Flask, render_template
 app = Flask(__name__)
-'''The Flask application instance.'''
-app.url_map.strict_slashes = False
+classes = {"Amenity": Amenity, "City": City,
+           "Place": Place, "Review": Review, "State": State, "User": User}
 
 
-@app.route('/states_list')
+@app.route('/states_list', strict_slashes=False)
 def states_list():
-    '''The states_list page.'''
-    all_states = list(storage.all(State).values())
-    all_states.sort(key=lambda x: x.name)
-    ctxt = {
-        'states': all_states
-    }
-    return render_template('7-states_list.html', **ctxt)
+    """ display HTML page with list of states """
+    states = storage.all(classes["State"]).values()
+    # ^ fetches States data from storage engine, then in line below,
+    # those states are passed into the template
+    return render_template('7-states_list.html', states=states)
 
 
 @app.teardown_appcontext
-def flask_teardown(exc):
-    '''The Flask app/request context end event listener.'''
+def remove_SQLalc_session(exception):
+    """ close storage when tear down is executed """
     storage.close()
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='5000')
+    app.run(host='0.0.0.0', port=5000)
